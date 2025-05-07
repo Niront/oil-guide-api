@@ -31,13 +31,18 @@ app.post("/oil-info", async (req, res) => {
   } catch (error) {
     console.error("Error querying OpenAI:", error);
     res.status(503).json({
-  error: "The AI service is currently unavailable. Please try again later.",
-  message: error.message, // For development, remove in production if needed
-});
-
+      error: "The AI service is currently unavailable. Please try again later.",
+      message: error.message, // Consider removing this in production
+    });
   }
 });
 
+// Health check route
+app.get("/", (req, res) => {
+  res.send("Oil Info API is running.");
+});
+
+// Start server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
