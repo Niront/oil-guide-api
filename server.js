@@ -1,17 +1,19 @@
 // server.js
 const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
 const OpenAI = require("openai");
 require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Set up OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Ensure this is set in your Render Environment Variables
-});
+app.use(cors());
+app.use(bodyParser.json());
 
-app.use(express.json());
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 app.post("/oil-info", async (req, res) => {
   try {
