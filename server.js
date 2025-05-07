@@ -30,7 +30,11 @@ app.post("/oil-info", async (req, res) => {
     res.json({ result });
   } catch (error) {
     console.error("Error querying OpenAI:", error);
-    res.status(500).json({ error: "Failed to get response from OpenAI" });
+    res.status(503).json({
+  error: "The AI service is currently unavailable. Please try again later.",
+  message: error.message, // For development, remove in production if needed
+});
+
   }
 });
 
