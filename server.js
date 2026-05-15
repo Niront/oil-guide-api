@@ -1,49 +1,87 @@
-// server.js
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const OpenAI = require("openai");
+const cloudinary = require("cloudinary").v2;
+const axios = require("axios");
 require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "20mb" }));
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Health check route
-app.get("/", (req, res) => {
-  res.send("Oil Info API is running.");
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-app.post("/oil-info", async (req, res) => {
+app.get("/", (req, res) => {
+  res.send("Niront AI Image Service is running.");
+});
+
+app.get("/health", (req, res) => {
+  res.json({
+    ok: true,
+    service: "niront-ai-image-service",
+    ts: new Date().toISOString()
+  });
+});
+
+app.post("/generate-image", async (req, res) => {
   try {
-    const { year, make, model, cylinderSize } = req.body;
+    const prompt = String(req.body.prompt || "").trim();
 
-    const prompt = `What is the recommended engine oil viscosity and capacity for a ${year} ${make} ${model} with a ${cylinderSize} engine?`;
+    if (!prompt) {
+      return res.status(400).json({
+        ok: false,
+        error: "missing_prompt"
+      });
+    }
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo", // Upgraded from gpt-3.5-turbo
-      messages: [{ role: "user", content: prompt }],
+    console.log("Generating image...");
+
+    const imageResponse = await openai.images.generate({
+      model: "gpt-image-1",
+      prompt: prompt,
+      size: "1024x1024"
     });
 
-    const result = response.choices[0].message.content;
-    res.json({ result });
+    const imageBase64 = imageResponse.data[0].b64_json;
 
-  } catch (error) {
-    console.error("Error querying OpenAI:", error);
-    res.status(503).json({
-      error: "The AI service is currently unavailable. Please try again later.",
-      message: error.message, // Helpful in development
+    if (!imageBase64) {
+      throw new Error("No image returned from OpenAI");
+    }
+
+    const uploadResult = await cloudinary.uploader.upload(
+      `data:image/png;base64,${imageBase64}`,
+      {
+        folder: "niront-ai-images"
+      }
+    );
+
+    return res.json({
+      ok: true,
+      image_url: uploadResult.secure_url,
+      public_id: uploadResult.public_id
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      ok: false,
+      error: String(err.message || err)
     });
   }
 });
 
-// Start server
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log("Niront AI Image Service running on port " + port);
 });
