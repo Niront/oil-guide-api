@@ -82,6 +82,33 @@ app.post("/generate-image", async (req, res) => {
   }
 });
 
+app.post("/generate-video", async (req, res) => {
+  try {
+    const { prompt, videoType } = req.body || {};
+
+    console.log("VIDEO REQUEST:", {
+      videoType,
+      prompt
+    });
+
+    return res.json({
+      ok: true,
+      video_url: "",
+      thumbnail_url: "",
+      status: "pending_backend",
+      message: "AI video backend placeholder ready"
+    });
+
+  } catch (err) {
+    console.error("VIDEO GENERATION ERROR:", err);
+
+    return res.status(500).json({
+      ok: false,
+      error: err.message || "Video generation failed"
+    });
+  }
+});
+
 app.listen(port, () => {
   console.log("Niront AI Image Service running on port " + port);
 });
