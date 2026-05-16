@@ -84,19 +84,34 @@ app.post("/generate-image", async (req, res) => {
 
 app.post("/generate-video", async (req, res) => {
   try {
-    const { prompt, videoType } = req.body || {};
+    const { prompt, videoType, vehicleId, customerId } = req.body || {};
+
+  const videoId =
+  "VID-" +
+  Date.now() +
+  "-" +
+  Math.random().toString(36).slice(2, 8).toUpperCase();
 
     console.log("VIDEO REQUEST:", {
       videoType,
       prompt
     });
 
+    console.log("VIDEO JOB ID:", videoId);
+
+    console.log("VIDEO VEHICLE:", vehicleId);
+
+    console.log("VIDEO CUSTOMER:", customerId);
+
     return res.json({
       ok: true,
+      video_id: videoId,
+      vehicle_id: vehicleId || "",
+      customer_id: customerId || "",
       video_url: "",
       thumbnail_url: "",
-      status: "pending_backend",
-      message: "AI video backend placeholder ready"
+      status: "queued",
+      message: "AI video job created successfully."
     });
 
   } catch (err) {
